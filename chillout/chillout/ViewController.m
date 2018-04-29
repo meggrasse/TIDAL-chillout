@@ -46,7 +46,6 @@
                                                    [title.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor constant:-100],
                                                    ];
     
-    
     [NSLayoutConstraint activateConstraints:constraints];
     
     // make "start listening" button
@@ -72,6 +71,8 @@
     // add to the view
     [self.view addSubview:listen];
     
+    [self startListening];
+
     //  uncomment to test each method
 //    [self addCurrentTrackToPlaylistTest];
 }
@@ -81,6 +82,19 @@
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
+
+- (void)startListening {
+    // Setup notifications for track changing
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(trackChanged)
+                                                 name:MPMusicPlayerControllerNowPlayingItemDidChangeNotification object:nil];
+    
+    [MPMusicPlayerController.systemMusicPlayer beginGeneratingPlaybackNotifications];
+}
+
+- (void)trackChanged {
+    // TODO: setup heuristic
+    }
 
 - (void)addCurrentTrackToPlaylist:(MPMediaPlaylist *)playlist {
     NSString *currentTrackProductID = MPMusicPlayerController.systemMusicPlayer.nowPlayingItem.playbackStoreID;

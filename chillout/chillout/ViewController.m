@@ -17,6 +17,7 @@
 @implementation ViewController
 
 MPMediaPlaylist *chilloutPlaylist;
+UILabel *nowPlaying;
 double startTrackAlpha;
 bool addedTrack = NO;
 
@@ -38,19 +39,11 @@ bool addedTrack = NO;
     UILabel *title = [[UILabel alloc] init];
     title.text = @"chillout";
     title.textAlignment = NSTextAlignmentCenter;
+    title.numberOfLines = NSTextAlignmentCenter;
     title.font = [UIFont systemFontOfSize:36 weight:UIFontWeightSemibold];
     title.translatesAutoresizingMaskIntoConstraints = NO;
     // add to the view
     [self.view addSubview:title];
-    
-    // use autolayout for position of "chillout"
-    NSArray<NSLayoutConstraint *> *constraints = @[
-                                                   [title.leftAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.leftAnchor],
-                                                   [title.rightAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.rightAnchor],
-                                                   [title.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor constant:-100],
-                                                   ];
-    
-    [NSLayoutConstraint activateConstraints:constraints];
     
     // playlist picker
     UIPickerView *playlistPicker = [UIPickerView new];
@@ -80,6 +73,29 @@ bool addedTrack = NO;
     // add to the view
     [self.view addSubview:listen];
     
+    // make "nowplaying" label
+    nowPlaying = [[UILabel alloc] init];
+    nowPlaying.textAlignment = NSTextAlignmentCenter;
+    nowPlaying.numberOfLines = 2;
+    nowPlaying.font = [UIFont systemFontOfSize:16 weight:UIFontWeightBold];
+    nowPlaying.textColor = [UIColor grayColor];
+    nowPlaying.translatesAutoresizingMaskIntoConstraints = NO;
+    // add to the view
+    [self.view addSubview:nowPlaying];
+    
+    // use autolayout for position of labels
+    NSArray<NSLayoutConstraint *> *constraints = @[
+                                                   [title.leftAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.leftAnchor],
+                                                   [title.rightAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.rightAnchor],
+                                                   [title.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor constant:-100],
+                                                   
+                                                   [nowPlaying.leftAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.leftAnchor],
+                                                   [nowPlaying.rightAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.rightAnchor],
+                                                   [nowPlaying.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor constant:130],
+                                                   ];
+    
+    [NSLayoutConstraint activateConstraints:constraints];
+    
     [self findOrAddChilloutPlaylist];
 
     [self startListeningForMuse];
@@ -107,6 +123,12 @@ bool addedTrack = NO;
     // hack so we know to update the startTrackAlpha
     startTrackAlpha = -999;
     addedTrack = NO;
+    
+    // change the now playing label
+    NSString *nowPlayingTitle = MPMusicPlayerController.systemMusicPlayer.nowPlayingItem.title;
+    NSString *nowPlayingArtist = MPMusicPlayerController.systemMusicPlayer.nowPlayingItem.artist;
+    nowPlaying.text = [nowPlayingTitle stringByAppendingString:@"\n"];
+    nowPlaying.text = [nowPlaying.text stringByAppendingString:nowPlayingArtist];
 }
 
 - (void)addCurrentTrackToPlaylist:(MPMediaPlaylist *)playlist {

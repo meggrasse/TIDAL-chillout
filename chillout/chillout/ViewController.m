@@ -22,6 +22,7 @@ UIButton *listenButton;
 UILabel *nowPlaying;
 double startTrackAlpha = -999;
 bool addedTrack = NO;
+bool isListening = NO;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -54,7 +55,7 @@ bool addedTrack = NO;
     
     // make listen button
     listenButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    [listenButton addTarget:self action:@selector(startListening:) forControlEvents:UIControlEventTouchUpInside];
+    [listenButton addTarget:self action:@selector(controlButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
     
     // not autolayout
     listenButton.frame = CGRectMake(0, 0, 50, 50);
@@ -112,16 +113,39 @@ bool addedTrack = NO;
     [NSLayoutConstraint activateConstraints:constraints];
     
     [self findOrAddChilloutPlaylist];
-
-
     
     //  uncomment to test each method
 //    [self addCurrentTrackToPlaylistTest];
 }
 
-- (void)startListening:(id)sender {
+- (void)controlButtonTapped:(id)sender {
+//    if (isListening) {
+//        [self stopListening];
+//    } else {
+//        // if there is no muse connected, connect one
+//        if (![[[IXNMuseManagerIos sharedManager] getMuses] count]) {
+//            [self startListeningForMuse];
+//        } else  {
+//            IXNMuse *currentMuse = [[IXNMuseManagerIos sharedManager] getMuses][0];
+//            [self setupMuse:currentMuse];
+//        }
+//    }
+    isListening ? [self stopListening] : [self startListening];
+
+    // update state
+    isListening = !isListening;
+}
+
+- (void)startListening {
     NSLog(@"listening...");
-    [self startListeningForMuse];
+    //if no current muses then init, otherwise setup for this muse
+    if (![[[IXNMuseManagerIos sharedManager] getMuses] count]) {
+        [self initListeningForMuse];
+    } else {
+        IXNMuse *currentMuse = [[IXNMuseManagerIos sharedManager] getMuses][0];
+        [self startCapturingDataFromMuse:currentMuse];
+    }
+    
     [self startListeningForTrack];
     
     // start playing current track
@@ -131,6 +155,27 @@ bool addedTrack = NO;
     }];
     
     [self updateUIForCurrentTrack];
+}
+
+- (void)stopListening {
+    NSLog(@"no longer listening...");
+    // stop getting data packets from the muse but don't disconnect
+    IXNMuse *currentMuse = [[IXNMuseManagerIos sharedManager] getMuses][0];
+    [currentMuse unregisterAllListeners];
+    
+    // end notifications for current track
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:MPMusicPlayerControllerNowPlayingItemDidChangeNotification object:nil];
+    [MPMusicPlayerController.systemMusicPlayer endGeneratingPlaybackNotifications];
+    
+    // stop playing current track
+    [[MPMusicPlayerController systemMusicPlayer] stop];
+    
+    // clear out current startTrackAlpha
+    startTrackAlpha = -999;
+    
+    // update UI
+    [listenButton setTitle:@"▶︎" forState:UIControlStateNormal];
+    nowPlaying.text = @"";
 }
 
 - (void)startListeningForTrack {
@@ -143,6 +188,7 @@ bool addedTrack = NO;
 }
 
 - (void)trackChanged {
+    NSLog(@"track changed");
     // hack so we know to update the startTrackAlpha
     startTrackAlpha = -999;
     addedTrack = NO;
@@ -166,12 +212,12 @@ bool addedTrack = NO;
     [playlist addItemWithProductID:currentTrackProductID completionHandler:nil];
 }
 
-- (void)startListeningForMuse {
+- (void)initListeningForMuse {
     [[IXNMuseManagerIos sharedManager] setMuseListener:self];
     [[IXNMuseManagerIos sharedManager] startListening];
 }
 
-- (void)setupMuse:(IXNMuse *)currentMuse {
+- (void)startCapturingDataFromMuse:(IXNMuse *)currentMuse {
     // starting getting alpha data
     [currentMuse registerDataListener:self
                                  type:IXNMuseDataPacketTypeAlphaAbsolute];
@@ -180,7 +226,7 @@ bool addedTrack = NO;
     [currentMuse runAsynchronously];
 }
 
-#pragma mark - IXNMuselistenButtoner
+#pragma mark - IXNMuseListener
 
 - (void)museListChanged {
     // TODO: make a visual connected label
@@ -188,10 +234,10 @@ bool addedTrack = NO;
     
     // gets the current muse - the first in the list of surrounding muses
     IXNMuse *currentMuse = [[IXNMuseManagerIos sharedManager] getMuses][0];
-    [self setupMuse:currentMuse];
+    [self startCapturingDataFromMuse:currentMuse];
 }
 
-#pragma mark - IXNMuseDatalistenButtoner
+#pragma mark - IXNMuseDataListener
 
 - (void)receiveMuseDataPacket:(IXNMuseDataPacket *)packet
                          muse:(IXNMuse *)muse {

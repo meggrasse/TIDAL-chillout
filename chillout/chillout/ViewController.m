@@ -10,16 +10,11 @@
 
 #import <MediaPlayer/MediaPlayer.h>
 
-@interface ViewController ()
-
-@end
-
 @implementation ViewController
 
-MPMediaPlaylist *chilloutPlaylist;
 UIButton *listenButton;
-//UILabel *addedToLibrary;
 UILabel *nowPlaying;
+NSUUID *chilloutPlaylistUUID;
 double startTrackAlpha = -999;
 bool addedTrack = NO;
 bool isListening = NO;
@@ -77,14 +72,6 @@ bool isListening = NO;
     // add to the view
     [self.view addSubview:listenButton];
     
-//    // make "nowplaying" label
-//    addedToLibrary = [[UILabel alloc] init];
-//    addedToLibrary.textAlignment = NSTextAlignmentCenter;
-//    addedToLibrary.font = [UIFont systemFontOfSize:12 weight:UIFontWeightThin];
-//    addedToLibrary.translatesAutoresizingMaskIntoConstraints = NO;
-//    // add to the view
-//    [self.view addSubview:addedToLibrary];
-    
     // make "nowplaying" label
     nowPlaying = [[UILabel alloc] init];
     nowPlaying.textAlignment = NSTextAlignmentCenter;
@@ -101,10 +88,6 @@ bool isListening = NO;
                                                    [title.rightAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.rightAnchor],
                                                    [title.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor constant:-100],
                                                    
-//                                                   [addedToLibrary.leftAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.leftAnchor],
-//                                                   [addedToLibrary.rightAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.rightAnchor],
-//                                                   [addedToLibrary.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor constant:100],
-                                                   
                                                    [nowPlaying.leftAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.leftAnchor],
                                                    [nowPlaying.rightAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.rightAnchor],
                                                    [nowPlaying.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor constant:130],
@@ -113,23 +96,9 @@ bool isListening = NO;
     [NSLayoutConstraint activateConstraints:constraints];
     
     [self findOrAddChilloutPlaylist];
-    
-    //  uncomment to test each method
-//    [self addCurrentTrackToPlaylistTest];
 }
 
 - (void)controlButtonTapped:(id)sender {
-//    if (isListening) {
-//        [self stopListening];
-//    } else {
-//        // if there is no muse connected, connect one
-//        if (![[[IXNMuseManagerIos sharedManager] getMuses] count]) {
-//            [self startListeningForMuse];
-//        } else  {
-//            IXNMuse *currentMuse = [[IXNMuseManagerIos sharedManager] getMuses][0];
-//            [self setupMuse:currentMuse];
-//        }
-//    }
     isListening ? [self stopListening] : [self startListening];
 
     // update state
@@ -178,6 +147,8 @@ bool isListening = NO;
     nowPlaying.text = @"";
 }
 
+#pragma mark - Track
+
 - (void)startListeningForTrack {
     // Setup notifications for track changing
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -207,10 +178,7 @@ bool isListening = NO;
     [listenButton setTitle:@"￭" forState:UIControlStateNormal];
 }
 
-- (void)addCurrentTrackToPlaylist:(MPMediaPlaylist *)playlist {
-    NSString *currentTrackProductID = MPMusicPlayerController.systemMusicPlayer.nowPlayingItem.playbackStoreID;
-    [playlist addItemWithProductID:currentTrackProductID completionHandler:nil];
-}
+#pragma mark - Muse
 
 - (void)initListeningForMuse {
     [[IXNMuseManagerIos sharedManager] setMuseListener:self];
@@ -229,7 +197,6 @@ bool isListening = NO;
 #pragma mark - IXNMuseListener
 
 - (void)museListChanged {
-    // TODO: make a visual connected label
     NSLog(@"CONNECTED");
     
     // gets the current muse - the first in the list of surrounding muses
@@ -242,7 +209,6 @@ bool isListening = NO;
 - (void)receiveMuseDataPacket:(IXNMuseDataPacket *)packet
                          muse:(IXNMuse *)muse {
     NSLog(@"Recieved packet");
-    if (addedTrack) return;
     if (packet.packetType == IXNMuseDataPacketTypeAlphaAbsolute) {
         double currentAlpha = ([packet.values[IXNEegEEG1] doubleValue] + [packet.values[IXNEegEEG2] doubleValue] + [packet.values[IXNEegEEG3] doubleValue] +[packet.values[IXNEegEEG4] doubleValue]) / 4;
         NSLog(@"Current alpha: %f", currentAlpha);
@@ -252,11 +218,16 @@ bool isListening = NO;
             NSLog(@"Start alpha: %f", startTrackAlpha);
         // otherwise if they are chilling and we haven't added the track yet
         } else if (currentAlpha < (.75 * startTrackAlpha)) {
-            [self addCurrentTrackToPlaylist:chilloutPlaylist];
-            //    dispatch_async(dispatch_get_main_queue(), ^{
-            [listenButton setTitle:@"✔️" forState:UIControlStateNormal];
-            //    });
-//            addedToLibrary.text = @"Added to Library";
+            MPMediaPlaylistCreationMetadata *playlistData = [[MPMediaPlaylistCreationMetadata alloc] initWithName:@"chillout"];
+            [MPMediaLibrary.defaultMediaLibrary getPlaylistWithUUID:chilloutPlaylistUUID creationMetadata:playlistData completionHandler:^(MPMediaPlaylist *playlist, NSError *error) {
+                // if you haven't added the track, add it to the playlist
+                if (!addedTrack) {
+                    NSString *currentTrackProductID = MPMusicPlayerController.systemMusicPlayer.nowPlayingItem.playbackStoreID;
+                    [playlist addItemWithProductID:currentTrackProductID completionHandler:nil];
+                    addedTrack = YES;
+                    [listenButton setTitle:@"✔️" forState:UIControlStateNormal];
+                }
+            }];
         }
     }
 }
@@ -266,31 +237,19 @@ bool isListening = NO;
     // Not needed
 }
 
-//- (void)findOrAddChilloutPlaylist:(void (^)(MPMediaPlaylist *playlist))completionHandler {
 - (void)findOrAddChilloutPlaylist {
-    MPMediaPlaylistCreationMetadata *playlistData = [[MPMediaPlaylistCreationMetadata alloc] initWithName:@"chillout"];
     NSURL *pathURL = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:@"playlist1.txt"]];
-    
     NSString *results = [NSString stringWithContentsOfFile:pathURL.path encoding:NSUTF8StringEncoding error:nil];
     
-    NSUUID *uuid;
     if (results) {
-        uuid = [[NSUUID alloc] initWithUUIDString:results];
+        chilloutPlaylistUUID = [[NSUUID alloc] initWithUUIDString:results];
     } else {
-        uuid = [NSUUID UUID];
+        chilloutPlaylistUUID = [NSUUID UUID];
         // Write the uuid to the file
-        [self writeUUID:uuid toPath:pathURL.path];
+        [self writeUUID:chilloutPlaylistUUID toPath:pathURL.path];
     }
     
     NSLog(@"Results: %@", results);
-
-    [MPMediaLibrary.defaultMediaLibrary getPlaylistWithUUID:uuid creationMetadata:playlistData completionHandler:^(MPMediaPlaylist *playlist, NSError *error) {
-        // There is a potential bug here in setting chilloutPlaylist in the block - there's a possiblity we access it before it's been set
-        chilloutPlaylist = playlist;
-        NSLog(@"Chillout playlist: %@", chilloutPlaylist.name);
-//        completionHandler(playlist);
-    }];
-    
 }
 
 - (void)writeUUID:(NSUUID *)uuid toPath:(NSString *)path {
@@ -302,18 +261,6 @@ bool isListening = NO;
     NSLog(@"is writable at path: %d", [[NSFileManager defaultManager] isWritableFileAtPath:path]);
     bool didWrite = [uuid.UUIDString writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];
     NSLog(@"wrote to file: %d", didWrite);
-}
-
-#pragma mark - Tests
-
-- (void)addCurrentTrackToPlaylistTest {
-    
-    MPMediaPlaylistCreationMetadata *playlistData = [[MPMediaPlaylistCreationMetadata alloc] initWithName:@"addCurrentTrackToPlaylistTest"];
-    [MPMediaLibrary.defaultMediaLibrary getPlaylistWithUUID: [NSUUID UUID]
-                       creationMetadata:playlistData
-                      completionHandler:^(MPMediaPlaylist *playlist, NSError *error) {
-                          [self addCurrentTrackToPlaylist:playlist];
-                      }];
 }
 
 @end

@@ -213,11 +213,12 @@ bool isListening = NO;
         double currentAlpha = ([packet.values[IXNEegEEG1] doubleValue] + [packet.values[IXNEegEEG2] doubleValue] + [packet.values[IXNEegEEG3] doubleValue] +[packet.values[IXNEegEEG4] doubleValue]) / 4;
         NSLog(@"Current alpha: %f", currentAlpha);
         // if the track just started, set startTrackAlpha and get outta here
-        if (startTrackAlpha == -999) {
+        if (startTrackAlpha == -999 && currentAlpha > 0) {
             startTrackAlpha = currentAlpha;
             NSLog(@"Start alpha: %f", startTrackAlpha);
         // otherwise if they are chilling and we haven't added the track yet
-        } else if (currentAlpha < (.75 * startTrackAlpha)) {
+        // heuristic
+        } else if (currentAlpha > (1.25 * startTrackAlpha) && (startTrackAlpha != -999)) {
             MPMediaPlaylistCreationMetadata *playlistData = [[MPMediaPlaylistCreationMetadata alloc] initWithName:@"chillout"];
             [MPMediaLibrary.defaultMediaLibrary getPlaylistWithUUID:chilloutPlaylistUUID creationMetadata:playlistData completionHandler:^(MPMediaPlaylist *playlist, NSError *error) {
                 // if you haven't added the track, add it to the playlist

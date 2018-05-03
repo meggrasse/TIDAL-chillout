@@ -17,6 +17,8 @@
 @implementation ViewController
 
 MPMediaPlaylist *chilloutPlaylist;
+UIButton *listenButton;
+//UILabel *addedToLibrary;
 UILabel *nowPlaying;
 double startTrackAlpha;
 bool addedTrack = NO;
@@ -50,28 +52,36 @@ bool addedTrack = NO;
     playlistPicker.delegate = self;
     playlistPicker.dataSource = self;
     
-    // make "start listening" button
-    UIButton *listen = [UIButton buttonWithType:UIButtonTypeCustom];
+    // make "start listenButtoning" button
+    listenButton = [UIButton buttonWithType:UIButtonTypeCustom];
     
     // not autolayout
-    listen.frame = CGRectMake(0, 0, 50, 50);
-    listen.center = CGPointMake(self.view.center.x, self.view.center.y + 20);
+    listenButton.frame = CGRectMake(0, 0, 50, 50);
+    listenButton.center = CGPointMake(self.view.center.x, self.view.center.y + 20);
     
     // button title label
-    [listen setTitle:@"▶︎" forState:UIControlStateNormal];
-    listen.titleLabel.font = [UIFont systemFontOfSize:25];
-    [listen setTitleColor:UIColor.blackColor forState:UIControlStateNormal];
-    listen.titleLabel.textAlignment = NSTextAlignmentCenter;
-    listen.backgroundColor = UIColor.clearColor;
+    [listenButton setTitle:@"￭" forState:UIControlStateNormal];
+    listenButton.titleLabel.font = [UIFont systemFontOfSize:25];
+    [listenButton setTitleColor:UIColor.blackColor forState:UIControlStateNormal];
+    listenButton.titleLabel.textAlignment = NSTextAlignmentCenter;
+    listenButton.backgroundColor = UIColor.clearColor;
     
     // black border
-    listen.layer.masksToBounds = YES;
-    listen.layer.cornerRadius = listen.frame.size.width / 2;
-    listen.layer.borderWidth = 1;
-    listen.layer.borderColor = UIColor.blackColor.CGColor;
+    listenButton.layer.masksToBounds = YES;
+    listenButton.layer.cornerRadius = listenButton.frame.size.width / 2;
+    listenButton.layer.borderWidth = 1;
+    listenButton.layer.borderColor = UIColor.blackColor.CGColor;
     
     // add to the view
-    [self.view addSubview:listen];
+    [self.view addSubview:listenButton];
+    
+//    // make "nowplaying" label
+//    addedToLibrary = [[UILabel alloc] init];
+//    addedToLibrary.textAlignment = NSTextAlignmentCenter;
+//    addedToLibrary.font = [UIFont systemFontOfSize:12 weight:UIFontWeightThin];
+//    addedToLibrary.translatesAutoresizingMaskIntoConstraints = NO;
+//    // add to the view
+//    [self.view addSubview:addedToLibrary];
     
     // make "nowplaying" label
     nowPlaying = [[UILabel alloc] init];
@@ -89,6 +99,10 @@ bool addedTrack = NO;
                                                    [title.rightAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.rightAnchor],
                                                    [title.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor constant:-100],
                                                    
+//                                                   [addedToLibrary.leftAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.leftAnchor],
+//                                                   [addedToLibrary.rightAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.rightAnchor],
+//                                                   [addedToLibrary.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor constant:100],
+                                                   
                                                    [nowPlaying.leftAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.leftAnchor],
                                                    [nowPlaying.rightAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.rightAnchor],
                                                    [nowPlaying.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor constant:130],
@@ -98,8 +112,8 @@ bool addedTrack = NO;
     
     [self findOrAddChilloutPlaylist];
 
-    [self startListeningForMuse];
-    [self startListeningForTrack];
+    [self startlistenButtoningForMuse];
+    [self startlistenButtoningForTrack];
     
     //  uncomment to test each method
 //    [self addCurrentTrackToPlaylistTest];
@@ -110,7 +124,7 @@ bool addedTrack = NO;
     // Dispose of any resources that can be recreated.
 }
 
-- (void)startListeningForTrack {
+- (void)startlistenButtoningForTrack {
     // Setup notifications for track changing
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(trackChanged)
@@ -129,6 +143,9 @@ bool addedTrack = NO;
     NSString *nowPlayingArtist = MPMusicPlayerController.systemMusicPlayer.nowPlayingItem.artist;
     nowPlaying.text = [nowPlayingTitle stringByAppendingString:@"\n"];
     nowPlaying.text = [nowPlaying.text stringByAppendingString:nowPlayingArtist];
+    
+    // take away add to library message
+    [listenButton setTitle:@"￭" forState:UIControlStateNormal];
 }
 
 - (void)addCurrentTrackToPlaylist:(MPMediaPlaylist *)playlist {
@@ -136,7 +153,7 @@ bool addedTrack = NO;
     [playlist addItemWithProductID:currentTrackProductID completionHandler:nil];
 }
 
-- (void)startListeningForMuse {
+- (void)startlistenButtoningForMuse {
     [[IXNMuseManagerIos sharedManager] setMuseListener:self];
     [[IXNMuseManagerIos sharedManager] startListening];
 }
@@ -150,7 +167,7 @@ bool addedTrack = NO;
     [currentMuse runAsynchronously];
 }
 
-#pragma mark - IXNMuseListener
+#pragma mark - IXNMuselistenButtoner
 
 - (void)museListChanged {
     // TODO: make a visual connected label
@@ -161,7 +178,7 @@ bool addedTrack = NO;
     [self setupMuse:currentMuse];
 }
 
-#pragma mark - IXNMuseDataListener
+#pragma mark - IXNMuseDatalistenButtoner
 
 - (void)receiveMuseDataPacket:(IXNMuseDataPacket *)packet
                          muse:(IXNMuse *)muse {
@@ -176,6 +193,10 @@ bool addedTrack = NO;
         // otherwise if they are chilling and we haven't added the track yet
         } else if (currentAlpha < (.75 * startTrackAlpha)) {
             [self addCurrentTrackToPlaylist:chilloutPlaylist];
+            //    dispatch_async(dispatch_get_main_queue(), ^{
+            [listenButton setTitle:@"✔️" forState:UIControlStateNormal];
+            //    });
+//            addedToLibrary.text = @"Added to Library";
         }
     }
 }

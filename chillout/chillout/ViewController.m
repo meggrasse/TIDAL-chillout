@@ -16,6 +16,7 @@
 
 @implementation ViewController
 
+MPMediaPlaylist *chilloutPlaylist;
 double startTrackAlpha;
 bool addedTrack = NO;
 
@@ -51,6 +52,11 @@ bool addedTrack = NO;
     
     [NSLayoutConstraint activateConstraints:constraints];
     
+    // playlist picker
+    UIPickerView *playlistPicker = [UIPickerView new];
+    playlistPicker.delegate = self;
+    playlistPicker.dataSource = self;
+    
     // make "start listening" button
     UIButton *listen = [UIButton buttonWithType:UIButtonTypeCustom];
     
@@ -73,6 +79,8 @@ bool addedTrack = NO;
     
     // add to the view
     [self.view addSubview:listen];
+    
+    [self findOrAddChilloutPlaylist];
 
     [self startListeningForMuse];
     [self startListeningForTrack];
@@ -145,8 +153,7 @@ bool addedTrack = NO;
             startTrackAlpha  = currentAlpha;
         // otherwise if they are chilling and we haven't added the track yet
         } else if (currentAlpha < (.75 * startTrackAlpha)) {
-            [self addCurrentTrackToPlaylistTest];
-//            [self addCurrentTrackToPlaylist:<#(MPMediaPlaylist *)#>];
+            [self addCurrentTrackToPlaylist:chilloutPlaylist];
         }
     }
 }
@@ -154,6 +161,44 @@ bool addedTrack = NO;
 - (void)receiveMuseArtifactPacket:(nonnull IXNMuseArtifactPacket *)packet
                              muse:(nullable IXNMuse *)muse {
     // Not needed
+}
+
+//- (void)findOrAddChilloutPlaylist:(void (^)(MPMediaPlaylist *playlist))completionHandler {
+- (void)findOrAddChilloutPlaylist {
+    MPMediaPlaylistCreationMetadata *playlistData = [[MPMediaPlaylistCreationMetadata alloc] initWithName:@"chillout"];
+    NSURL *pathURL = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:@"playlist1.txt"]];
+    
+    NSString *results = [NSString stringWithContentsOfFile:pathURL.path encoding:NSUTF8StringEncoding error:nil];
+    
+    NSUUID *uuid;
+    if (results) {
+        uuid = [[NSUUID alloc] initWithUUIDString:results];
+    } else {
+        uuid = [NSUUID UUID];
+        // Write the uuid to the file
+        [self writeUUID:uuid toPath:pathURL.path];
+    }
+    
+    NSLog(@"Results: %@", results);
+
+    [MPMediaLibrary.defaultMediaLibrary getPlaylistWithUUID:uuid creationMetadata:playlistData completionHandler:^(MPMediaPlaylist *playlist, NSError *error) {
+        // There is a potential bug here in setting chilloutPlaylist in the block - there's a possiblity we access it before it's been set
+        chilloutPlaylist = playlist;
+        NSLog(@"Chillout playlist: %@", chilloutPlaylist.name);
+//        completionHandler(playlist);
+    }];
+    
+}
+
+- (void)writeUUID:(NSUUID *)uuid toPath:(NSString *)path {
+    if (![[NSFileManager defaultManager] fileExistsAtPath:path]) {
+        [[NSFileManager defaultManager] createFileAtPath:path contents:nil attributes:nil];
+        NSLog(@"Creating file.");
+    }
+
+    NSLog(@"is writable at path: %d", [[NSFileManager defaultManager] isWritableFileAtPath:path]);
+    bool didWrite = [uuid.UUIDString writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];
+    NSLog(@"wrote to file: %d", didWrite);
 }
 
 #pragma mark - Tests

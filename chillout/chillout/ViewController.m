@@ -20,7 +20,7 @@ MPMediaPlaylist *chilloutPlaylist;
 UIButton *listenButton;
 //UILabel *addedToLibrary;
 UILabel *nowPlaying;
-double startTrackAlpha;
+double startTrackAlpha = -999;
 bool addedTrack = NO;
 
 - (void)viewDidLoad {
@@ -52,15 +52,16 @@ bool addedTrack = NO;
     playlistPicker.delegate = self;
     playlistPicker.dataSource = self;
     
-    // make "start listenButtoning" button
+    // make listen button
     listenButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    [listenButton addTarget:self action:@selector(startListening:) forControlEvents:UIControlEventTouchUpInside];
     
     // not autolayout
     listenButton.frame = CGRectMake(0, 0, 50, 50);
     listenButton.center = CGPointMake(self.view.center.x, self.view.center.y + 20);
     
     // button title label
-    [listenButton setTitle:@"￭" forState:UIControlStateNormal];
+    [listenButton setTitle:@"▶︎" forState:UIControlStateNormal];
     listenButton.titleLabel.font = [UIFont systemFontOfSize:25];
     [listenButton setTitleColor:UIColor.blackColor forState:UIControlStateNormal];
     listenButton.titleLabel.textAlignment = NSTextAlignmentCenter;
@@ -112,19 +113,27 @@ bool addedTrack = NO;
     
     [self findOrAddChilloutPlaylist];
 
-    [self startlistenButtoningForMuse];
-    [self startlistenButtoningForTrack];
+
     
     //  uncomment to test each method
 //    [self addCurrentTrackToPlaylistTest];
 }
 
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
+- (void)startListening:(id)sender {
+    NSLog(@"listening...");
+    [self startListeningForMuse];
+    [self startListeningForTrack];
+    
+    // start playing current track
+    // sometimes throws "prepareToPlay without a queue" error but still seems to work
+    [[MPMusicPlayerController systemMusicPlayer] prepareToPlayWithCompletionHandler:^(NSError *error) {
+        [[MPMusicPlayerController systemMusicPlayer] play];
+    }];
+    
+    [self updateUIForCurrentTrack];
 }
 
-- (void)startlistenButtoningForTrack {
+- (void)startListeningForTrack {
     // Setup notifications for track changing
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(trackChanged)
@@ -138,6 +147,10 @@ bool addedTrack = NO;
     startTrackAlpha = -999;
     addedTrack = NO;
     
+    [self updateUIForCurrentTrack];
+}
+
+- (void)updateUIForCurrentTrack {
     // change the now playing label
     NSString *nowPlayingTitle = MPMusicPlayerController.systemMusicPlayer.nowPlayingItem.title;
     NSString *nowPlayingArtist = MPMusicPlayerController.systemMusicPlayer.nowPlayingItem.artist;
@@ -153,7 +166,7 @@ bool addedTrack = NO;
     [playlist addItemWithProductID:currentTrackProductID completionHandler:nil];
 }
 
-- (void)startlistenButtoningForMuse {
+- (void)startListeningForMuse {
     [[IXNMuseManagerIos sharedManager] setMuseListener:self];
     [[IXNMuseManagerIos sharedManager] startListening];
 }
@@ -189,7 +202,8 @@ bool addedTrack = NO;
         NSLog(@"Current alpha: %f", currentAlpha);
         // if the track just started, set startTrackAlpha and get outta here
         if (startTrackAlpha == -999) {
-            startTrackAlpha  = currentAlpha;
+            startTrackAlpha = currentAlpha;
+            NSLog(@"Start alpha: %f", startTrackAlpha);
         // otherwise if they are chilling and we haven't added the track yet
         } else if (currentAlpha < (.75 * startTrackAlpha)) {
             [self addCurrentTrackToPlaylist:chilloutPlaylist];

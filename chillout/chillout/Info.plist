@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSBluetoothPeripheralUsageDescription.</key>
+	<string>To access your Muse headband</string>
 	<key>NSAppleMusicUsageDescription</key>
 	<string>To add the songs that chill you out to your specified playlist</string>
 	<key>CFBundleDevelopmentRegion</key>

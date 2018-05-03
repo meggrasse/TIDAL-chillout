@@ -7,9 +7,9 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <Muse/Muse.h>
 
-@interface ViewController : UIViewController
-
+@interface ViewController : UIViewController <IXNMuseListener, IXNMuseDataListener>
 
 @end
 

@@ -16,6 +16,9 @@
 
 @implementation ViewController
 
+double startTrackAlpha;
+bool addedTrack = NO;
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     
@@ -70,20 +73,20 @@
     
     // add to the view
     [self.view addSubview:listen];
-    
-    [self startListening];
 
+    [self startListeningForMuse];
+    [self startListeningForTrack];
+    
     //  uncomment to test each method
 //    [self addCurrentTrackToPlaylistTest];
 }
-
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
 
-- (void)startListening {
+- (void)startListeningForTrack {
     // Setup notifications for track changing
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(trackChanged)
@@ -93,15 +96,68 @@
 }
 
 - (void)trackChanged {
-    // TODO: setup heuristic
-    }
+    // hack so we know to update the startTrackAlpha
+    startTrackAlpha = -999;
+    addedTrack = NO;
+}
 
 - (void)addCurrentTrackToPlaylist:(MPMediaPlaylist *)playlist {
     NSString *currentTrackProductID = MPMusicPlayerController.systemMusicPlayer.nowPlayingItem.playbackStoreID;
     [playlist addItemWithProductID:currentTrackProductID completionHandler:nil];
 }
 
+- (void)startListeningForMuse {
+    [[IXNMuseManagerIos sharedManager] setMuseListener:self];
+    [[IXNMuseManagerIos sharedManager] startListening];
+}
+
+- (void)setupMuse:(IXNMuse *)currentMuse {
+    // starting getting alpha data
+    [currentMuse registerDataListener:self
+                                 type:IXNMuseDataPacketTypeAlphaAbsolute];
+    
+    // runs handling connection and such
+    [currentMuse runAsynchronously];
+}
+
+#pragma mark - IXNMuseListener
+
+- (void)museListChanged {
+    // TODO: make a visual connected label
+    NSLog(@"CONNECTED");
+    
+    // gets the current muse - the first in the list of surrounding muses
+    IXNMuse *currentMuse = [[IXNMuseManagerIos sharedManager] getMuses][0];
+    [self setupMuse:currentMuse];
+}
+
+#pragma mark - IXNMuseDataListener
+
+- (void)receiveMuseDataPacket:(IXNMuseDataPacket *)packet
+                         muse:(IXNMuse *)muse {
+    NSLog(@"Recieved packet");
+    if (addedTrack) return;
+    if (packet.packetType == IXNMuseDataPacketTypeAlphaAbsolute) {
+        double currentAlpha = ([packet.values[IXNEegEEG1] doubleValue] + [packet.values[IXNEegEEG2] doubleValue] + [packet.values[IXNEegEEG3] doubleValue] +[packet.values[IXNEegEEG4] doubleValue]) / 4;
+        NSLog(@"Current alpha: %f", currentAlpha);
+        // if the track just started, set startTrackAlpha and get outta here
+        if (startTrackAlpha == -999) {
+            startTrackAlpha  = currentAlpha;
+        // otherwise if they are chilling and we haven't added the track yet
+        } else if (currentAlpha < (.75 * startTrackAlpha)) {
+            [self addCurrentTrackToPlaylistTest];
+//            [self addCurrentTrackToPlaylist:<#(MPMediaPlaylist *)#>];
+        }
+    }
+}
+
+- (void)receiveMuseArtifactPacket:(nonnull IXNMuseArtifactPacket *)packet
+                             muse:(nullable IXNMuse *)muse {
+    // Not needed
+}
+
 #pragma mark - Tests
+
 - (void)addCurrentTrackToPlaylistTest {
     
     MPMediaPlaylistCreationMetadata *playlistData = [[MPMediaPlaylistCreationMetadata alloc] initWithName:@"addCurrentTrackToPlaylistTest"];

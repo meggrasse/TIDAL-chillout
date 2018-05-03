@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		94156795209A809D0088859F /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 94156794209A809D0088859F /* CoreBluetooth.framework */; };
+		9428F9C52097DB7900CE59BD /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 9428F9C42097DB7900CE59BD /* libc++.tbd */; };
+		9429E5DF2097CE65000B40C7 /* Muse.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9429E5DE2097CE65000B40C7 /* Muse.framework */; };
 		94BEE49E2093FFA300ACB341 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 94BEE49D2093FFA300ACB341 /* AppDelegate.m */; };
 		94BEE4A12093FFA300ACB341 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 94BEE4A02093FFA300ACB341 /* ViewController.m */; };
 		94BEE4A42093FFA300ACB341 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 94BEE4A22093FFA300ACB341 /* Main.storyboard */; };
@@ -16,6 +19,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		94156794209A809D0088859F /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
+		9428F9C42097DB7900CE59BD /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/usr/lib/libc++.tbd"; sourceTree = DEVELOPER_DIR; };
+		9429E5DE2097CE65000B40C7 /* Muse.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Muse.framework; sourceTree = SOURCE_ROOT; };
 		94BEE4992093FFA300ACB341 /* chillout.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = chillout.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		94BEE49C2093FFA300ACB341 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		94BEE49D2093FFA300ACB341 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -33,17 +39,31 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				94156795209A809D0088859F /* CoreBluetooth.framework in Frameworks */,
+				9428F9C52097DB7900CE59BD /* libc++.tbd in Frameworks */,
+				9429E5DF2097CE65000B40C7 /* Muse.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		9429E5E02097CEB0000B40C7 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				94156794209A809D0088859F /* CoreBluetooth.framework */,
+				9428F9C42097DB7900CE59BD /* libc++.tbd */,
+				9429E5DE2097CE65000B40C7 /* Muse.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		94BEE4902093FFA300ACB341 = {
 			isa = PBXGroup;
 			children = (
 				94BEE49B2093FFA300ACB341 /* chillout */,
 				94BEE49A2093FFA300ACB341 /* Products */,
+				9429E5E02097CEB0000B40C7 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -280,6 +300,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = QR3YW3B828;
+				ENABLE_BITCODE = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				INFOPLIST_FILE = chillout/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.meggrasse.chillout;
@@ -294,6 +319,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = QR3YW3B828;
+				ENABLE_BITCODE = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				INFOPLIST_FILE = chillout/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.meggrasse.chillout;

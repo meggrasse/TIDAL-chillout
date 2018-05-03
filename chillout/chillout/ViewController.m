@@ -43,11 +43,6 @@ bool isListening = NO;
     // add to the view
     [self.view addSubview:title];
     
-    // playlist picker
-    UIPickerView *playlistPicker = [UIPickerView new];
-    playlistPicker.delegate = self;
-    playlistPicker.dataSource = self;
-    
     // make listen button
     listenButton = [UIButton buttonWithType:UIButtonTypeCustom];
     [listenButton addTarget:self action:@selector(controlButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
@@ -147,6 +142,32 @@ bool isListening = NO;
     nowPlaying.text = @"";
 }
 
+- (void)findOrAddChilloutPlaylist {
+    NSURL *pathURL = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:@"playlist1.txt"]];
+    NSString *results = [NSString stringWithContentsOfFile:pathURL.path encoding:NSUTF8StringEncoding error:nil];
+    
+    if (results) {
+        chilloutPlaylistUUID = [[NSUUID alloc] initWithUUIDString:results];
+    } else {
+        chilloutPlaylistUUID = [NSUUID UUID];
+        // Write the uuid to the file
+        [self writeUUID:chilloutPlaylistUUID toPath:pathURL.path];
+    }
+    
+    NSLog(@"Results: %@", results);
+}
+
+- (void)writeUUID:(NSUUID *)uuid toPath:(NSString *)path {
+    if (![[NSFileManager defaultManager] fileExistsAtPath:path]) {
+        [[NSFileManager defaultManager] createFileAtPath:path contents:nil attributes:nil];
+        NSLog(@"Creating file.");
+    }
+    
+    NSLog(@"is writable at path: %d", [[NSFileManager defaultManager] isWritableFileAtPath:path]);
+    bool didWrite = [uuid.UUIDString writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];
+    NSLog(@"wrote to file: %d", didWrite);
+}
+
 #pragma mark - Track
 
 - (void)startListeningForTrack {
@@ -236,32 +257,6 @@ bool isListening = NO;
 - (void)receiveMuseArtifactPacket:(nonnull IXNMuseArtifactPacket *)packet
                              muse:(nullable IXNMuse *)muse {
     // Not needed
-}
-
-- (void)findOrAddChilloutPlaylist {
-    NSURL *pathURL = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:@"playlist1.txt"]];
-    NSString *results = [NSString stringWithContentsOfFile:pathURL.path encoding:NSUTF8StringEncoding error:nil];
-    
-    if (results) {
-        chilloutPlaylistUUID = [[NSUUID alloc] initWithUUIDString:results];
-    } else {
-        chilloutPlaylistUUID = [NSUUID UUID];
-        // Write the uuid to the file
-        [self writeUUID:chilloutPlaylistUUID toPath:pathURL.path];
-    }
-    
-    NSLog(@"Results: %@", results);
-}
-
-- (void)writeUUID:(NSUUID *)uuid toPath:(NSString *)path {
-    if (![[NSFileManager defaultManager] fileExistsAtPath:path]) {
-        [[NSFileManager defaultManager] createFileAtPath:path contents:nil attributes:nil];
-        NSLog(@"Creating file.");
-    }
-
-    NSLog(@"is writable at path: %d", [[NSFileManager defaultManager] isWritableFileAtPath:path]);
-    bool didWrite = [uuid.UUIDString writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];
-    NSLog(@"wrote to file: %d", didWrite);
 }
 
 @end
